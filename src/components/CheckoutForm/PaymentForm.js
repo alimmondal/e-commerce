@@ -1,31 +1,31 @@
 import React from 'react';
 import { Typography, Button, Divider } from '@material-ui/core';
 import { Elements, CardElement, ElementsConsumer } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js'
+import { loadStripe } from '@stripe/stripe-js';
 import Review from './Review';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
-const PaymentForm = ({ checkoutToken, backStep, onCaptureCheckout }) => {
+const PaymentForm = ({ checkoutToken, shippingData, backStep, onCaptureCheckout, nextStep, timeout }) => {
     
-    const handleSubmit = (event, elements, stripe) => {
+    const handleSubmit =async (event, elements, stripe) => {
         event.preventDefault();
         if(!stripe || !elements) return;
         const cardElement = elements.getElement(CardElement);
 
-        const { error, paymentMethod } =  stripe.createPaymentMethod({type: 'card', card: cardElement});
+        const { error, paymentMethod } = await  stripe.createPaymentMethod({type: 'card', card: cardElement});
         
         if(error) {
             console.log(error);
         }else {
             const orderData = {
                 line_items: checkoutToken.live.line_items,
-                customer: { firstName: shippingData.firstName, lastName: shippingData.lastName, email: shippingData.email},
+                customer: { firstName: shippingData.firstName, lastName: shippingData.lastName, email: shippingData.email },
                 shipping: { 
                     name: 'Primary',
                     street: shippingData.address1,
                     town_city: shippingData.city,
-                    country_state: shippingData.shippingSubdivision,
+                    county_state: shippingData.shippingSubdivision,
                     postal_zip_code: shippingData.zip,
                     country: shippingData.shippingCountry,
                 },
@@ -37,7 +37,9 @@ const PaymentForm = ({ checkoutToken, backStep, onCaptureCheckout }) => {
                     }
                 }
             }
-            onCaptureCheckout(checkoutToken.id, orderData)
+            onCaptureCheckout(checkoutToken.id, orderData);
+            // timeout()
+            nextStep();
         }
     }
     return (
